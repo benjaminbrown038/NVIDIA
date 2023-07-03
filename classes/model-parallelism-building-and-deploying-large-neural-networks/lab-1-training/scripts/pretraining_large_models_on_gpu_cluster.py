@@ -115,4 +115,8 @@ bash -c '$LAUNCHER  $CMD' 2>&1 | tee -a $LOGS_PATH/$NAME.txt
 !grep iteration /dli/megatron/logs/log_2GPU.txt
 !rm -rf /dli/megatron/checkpoints/*
 
+!squeue
+!scancel -u $USER
+!squeue
+
 "Great job with pretraining GPT-3 on a GPU cluster."
