@@ -1,3 +1,5 @@
+
+
 !git clone https://github.com/triton-inference-server/fastertransformer_backend
 %cd fastertransformer_backend
 !git checkout 571a1fce438409087f5d3889237541828cc24ba5
@@ -6,45 +8,37 @@
 
 !mkdir triton-model-store
 !cp -r ./fastertransformer_backend/all_models/gptj triton-model-store/
-
 !ls triton-model-store/gptj/
-
 !CUDA_VISIBLE_DEVICES=3  ./FasterTransformer/build/bin/gpt_gemm 1 1 128 16 256 16384 50256 1 2
 
 
 import os
-os.system("CUDA_VISIBLE_DEVICES=2,3 mpirun -n 1 --allow-run-as-root /opt/tritonserver/bin/tritonserver  --model-repository=./triton-model-store/gptj/ &")
-
 import numpy as np
 import tritonclient.http as httpclient
-
 from tritonclient.utils import np_to_triton_dtype
+
+os.system("CUDA_VISIBLE_DEVICES=2,3 mpirun -n 1 --allow-run-as-root /opt/tritonserver/bin/tritonserver  --model-repository=./triton-model-store/gptj/ &")
+
 
 URL = "localhost:8000"
 MODEl_GPTJ_FASTERTRANSFORMER = "ensemble" 
-
 OUTPUT_LEN = 128
 BATCH_SIZE = 1
 BEAM_WIDTH = 1
 TOP_K = 1
 TOP_P = 0.0
-
 start_id = 220
 end_id = 50256
 
-
-client = httpclient.InferenceServerClient("localhost:8000",
-                                           concurrency=1,
-                                           verbose=False)
+client = httpclient.InferenceServerClient("localhost:8000",concurrency=1,verbose=False)
 
 
-# Inference hyperparameters
 def prepare_tensor(name, input):
-    tensor = httpclient.InferInput(
-        name, input.shape, np_to_triton_dtype(input.dtype))
+    tensor = httpclient.InferInput(name, input.shape, np_to_triton_dtype(input.dtype))
     tensor.set_data_from_numpy(input)
     return tensor
-  
+
+
 def prepare_inputs(input0):
     bad_words_list = np.array([[""]], dtype=object)
     stop_words_list = np.array([[""]], dtype=object)
@@ -77,11 +71,12 @@ def prepare_inputs(input0):
         prepare_tensor("is_return_log_probs", is_return_log_probs),
         prepare_tensor("beam_width", beam_width),
         prepare_tensor("start_id", start_ids),
-        prepare_tensor("end_id", end_ids),
-    ]
+        prepare_tensor("end_id", end_ids)]
+  
     return inputs
 
 print("Write an input prompt for the model and execute the cell:")
+
 input_user = input()
 input0 = [[input_user],]
 inputs = prepare_inputs(input0)
